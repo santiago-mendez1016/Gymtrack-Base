@@ -1,4 +1,147 @@
 USE `gymtrack`;
+DROP procedure IF EXISTS `CrearUsuario`;
+
+DELIMITER $$
+USE `gymtrack`$$
+CREATE PROCEDURE CrearUsuario (
+    IN Nombre VARCHAR(100),
+    IN Correo VARCHAR(100),
+    IN NumTel VARCHAR(20)
+)
+BEGIN
+    -- Verificar si el correo ya existe
+    IF NOT EXISTS (SELECT 1 FROM usuarios WHERE correo = Correo) THEN
+        INSERT INTO usuarios (nombre, correo, telefono)
+        VALUES (Nombre, Correo, NumTel);
+    ELSE
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El correo ya está registrado.';
+    END IF;
+END$$
+
+DELIMITER ;
+
+USE `gymtrack`;
+DROP procedure IF EXISTS `ModificarUsuarioGym`;
+
+DELIMITER $$
+USE `gymtrack`$$
+CREATE PROCEDURE ModificarUsuarioGym (
+    IN p_id INT,
+    IN Nombre VARCHAR(100),
+    IN Correo VARCHAR(100),
+    IN NumTel VARCHAR(20)
+)
+BEGIN
+    IF EXISTS (SELECT 1 FROM usuarios WHERE id = p_id) THEN
+
+        IF NOT EXISTS (
+            SELECT 1 FROM usuarios
+            WHERE correo = Correo AND id <> p_id
+        ) THEN
+
+            UPDATE usuarios
+            SET Nombre = p_nombre,
+                Correo = p_correo,
+                NumTel = p_telefono
+            WHERE id = p_id;
+
+        ELSE
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ese correo ya está en uso por otro cliente.';
+        END IF;
+
+    ELSE
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El cliente no existe.';
+    END IF;
+END$$
+
+DELIMITER ;
+
+USE `gymtrack`;
+DROP procedure IF EXISTS `VerificarLogin`;
+
+DELIMITER $$
+USE `gymtrack`$$
+CREATE PROCEDURE VerificarLogin (
+    IN Correo VARCHAR(100),
+    IN contrasena VARCHAR(255)
+)
+BEGIN
+    DECLARE v_id INT;
+
+    SELECT id INTO v_id
+    FROM usuarios
+    WHERE correo = Correo AND contrasena = contrasena;
+
+    IF v_id IS NOT NULL THEN
+        SELECT 'Acceso permitido' AS mensaje, v_id AS usuario_id;
+    ELSE
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Credenciales incorrectas';
+    END IF;
+END;$$
+
+DELIMITER ;
+
+USE `gymtrack`;
+DROP procedure IF EXISTS `BuscarUsuarioPorDocumento`;
+
+DELIMITER $$
+USE `gymtrack`$$
+CREATE PROCEDURE BuscarUsuarioPorDocumento (
+    IN TipoDoc tinyint(3),
+    IN NumDoc VARCHAR(20)
+)
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM usuarios
+        WHERE tipo_documento = TipoDoc
+          AND numero_documento = NumDoc
+    ) THEN
+        SELECT * FROM usuarios
+        WHERE tipo_documento = TipoDoc
+          AND numero_documento = NumDoc;
+    ELSE
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No se encontró un usuario con ese documento.';
+    END IF;
+END;$$
+
+DELIMITER ;
+
+USE `gymtrack`;
+DROP procedure IF EXISTS `BuscarUsuarioPorDocumento`;
+
+DELIMITER $$
+
+
+DROP TRIGGER IF EXISTS `gymtrack`.`usuario_AFTER_INSERT`;
+
+DELIMITER $$
+USE `gymtrack`$$
+CREATE DEFINER = CURRENT_USER TRIGGER `gymtrack`.`usuario_AFTER_INSERT` AFTER INSERT ON `usuario` FOR EACH ROW
+BEGIN
+UPDATE usuario
+SET activo = 1
+WHERE id;
+END$$
+DELIMITER ;
+
+CREATE OR REPLACE VIEW vw_usuarios_roles AS
+SELECT 
+    u.id AS usuario_id,
+    u.nombre AS nombre_usuario,
+    u.correo,
+    u.telefono,
+    u.activo,
+    r.nombre_rol
+FROM usuarios u
+JOIN roles r ON u.rol_id = r.id;
+
+
+USE `gymtrack`;
 DROP procedure IF EXISTS `sp_registrar_pago`;
 
 DELIMITER $$
@@ -177,7 +320,7 @@ SELECT
 FROM Descuentos d
 JOIN Servicio s ON d.ID_Servicio = s.IDServicio;
 
-SELECT * FROM vw_descuentos_servicios;s
+SELECT * FROM vw_descuentos_servicios;
 
 
 

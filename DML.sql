@@ -25,10 +25,12 @@ CREATE TABLE Usuario (
     Correo VARCHAR(100),
     EstUsu BIT,
     Direccion VARCHAR(100),
-    Contr VARCHAR(20),
     IDRol TINYINT(3), -- si decides conservarlo, aunque se recomienda gestionarlo por Usuario_Roles
-    FechNac DATE
+    FechNac DATE,
+    contrasena varchar (255)
+
 );
+
 
 -- Tabla de relación Usuario - Roles
 CREATE TABLE Usuario_Roles (
