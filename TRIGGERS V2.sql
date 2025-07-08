@@ -36,4 +36,4 @@ SELECT
     hc.fecha_modificacion
 FROM historial_contrasenas hc
 JOIN usuario u ON hc.id_usuario = u.id_usuario
-ORDER BY hc.fecha_modificacion DESC;
+ORDER BY hc.fecha_modificacion DESC;	

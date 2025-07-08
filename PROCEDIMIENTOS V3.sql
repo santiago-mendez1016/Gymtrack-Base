@@ -1,17 +1,17 @@
 -- ================================================
--- PROCEDIMIENTOS Y DATOS INICIALES - CORREGIDO
+-- ARCHIVO 3: PROCEDIMIENTOS Y TRIGGERS - GYMTRACK
 -- ================================================
-
 USE GYMTRACK;
 
 -- ============================
--- 1. PROCEDIMIENTO: REGISTRAR USUARIO
+-- 1. PROCEDIMIENTO: REGISTRAR USUARIO COMPLETO
 -- ============================
-
 DELIMITER //
 
 CREATE PROCEDURE RegistrarUsuarioCompleto (
     IN p_nombre VARCHAR(100),
+    IN p_ape_1 VARCHAR(100),
+    IN p_ape_2 VARCHAR(100),
     IN p_documento VARCHAR(20),
     IN p_tipo_doc ENUM('Cédula', 'Pasaporte'),
     IN p_correo VARCHAR(100),
@@ -27,9 +27,9 @@ BEGIN
     DECLARE v_id_usuario INT;
 
     INSERT INTO usuario (
-        nombre, documento, tipo_doc, correo, telefono, direccion, fecha_nacimiento, contrasena
+        nombre, ape_1, ape_2, documento, tipo_doc, correo, telefono, direccion, fecha_nacimiento, contrasena
     ) VALUES (
-        p_nombre, p_documento, p_tipo_doc, p_correo, p_telefono, p_direccion, p_fecha_nacimiento,
+        p_nombre, p_ape_1, p_ape_2, p_documento, p_tipo_doc, p_correo, p_telefono, p_direccion, p_fecha_nacimiento,
         SHA2(p_contrasena, 256)
     );
 
@@ -42,9 +42,12 @@ BEGIN
     );
 END //
 
+DELIMITER ;
+
 -- ============================
 -- 2. PROCEDIMIENTO: INICIAR SESIÓN
 -- ============================
+DELIMITER //
 
 CREATE PROCEDURE IniciarSesion (
     IN p_correo VARCHAR(100),
@@ -54,8 +57,9 @@ BEGIN
     SELECT
         u.id_usuario,
         u.nombre,
+        u.ape_1,
+        u.ape_2,
         u.correo,
-        u.contrasena,
         r.nombre_rol,
         ur.estado AS estado_rol
     FROM usuario u
@@ -67,9 +71,12 @@ BEGIN
     LIMIT 1;
 END //
 
+DELIMITER ;
+
 -- ============================
 -- 3. PROCEDIMIENTO: GENERAR FACTURA CON SERVICIOS
 -- ============================
+DELIMITER //
 
 CREATE PROCEDURE GenerarFacturaConServicios (
     IN p_id_usuario INT,
@@ -107,13 +114,15 @@ BEGIN
     END IF;
 END //
 
+DELIMITER ;
+
 -- ============================
 -- 4. PROCEDIMIENTO: CARGAR HORARIOS DISPONIBLES
 -- ============================
+DELIMITER //
 
 CREATE PROCEDURE CargarHorariosDisponibles()
 BEGIN
-    -- Vaciar completamente la tabla (más eficiente y seguro)
     TRUNCATE TABLE Horario_Disponible;
 
     -- Lunes a Viernes: 6:00 a 20:00
@@ -140,7 +149,7 @@ BEGIN
         SELECT 12 UNION SELECT 13 UNION SELECT 14
     ) h;
 
-    -- Domingo: solo Gym_All disponible
+    -- Domingo: 9:00 a 17:00 con clase 'Gym_All'
     INSERT INTO Horario_Disponible (Dia_Semana, Hora, Clase)
     SELECT 'Domingo', MAKETIME(h.hora, 0, 0), 'Gym_All'
     FROM (
@@ -151,11 +160,9 @@ END //
 
 DELIMITER ;
 
-
 -- ============================
 -- 5. PROCEDIMIENTO: ACTUALIZAR DATOS DE USUARIO
 -- ============================
-
 DELIMITER //
 
 CREATE PROCEDURE ActualizarDatosUsuario (
@@ -178,15 +185,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
-
-
-
-
-
-
-
-
-
-
-
